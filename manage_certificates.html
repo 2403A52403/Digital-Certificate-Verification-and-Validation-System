@@ -1,0 +1,285 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Certificates - CertiVerify</title>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .manage-container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .manage-container h1 {
+            color: #10234b;
+            margin-bottom: 10px;
+        }
+
+        .search-area {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-area input {
+            flex: 1;
+            min-width: 0;
+            padding: 13px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 750px;
+        }
+
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #10234b;
+            color: white;
+        }
+
+        .valid {
+            color: green;
+            font-weight: bold;
+        }
+
+        .revoked {
+            color: red;
+            font-weight: bold;
+        }
+
+        .action-btn {
+            padding: 9px 12px;
+            border-radius: 5px;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .revoke-btn {
+            background: #dc3545;
+        }
+
+        .restore-btn {
+            background: #198754;
+        }
+
+        #message {
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        @media(max-width:600px) {
+            .search-area {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h2>CertiVerify Admin</h2>
+    <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="issue_certificate.html">Issue Certificate</a>
+        <a href="index.html">Home</a>
+    </nav>
+</header>
+
+<div class="manage-container">
+
+    <h1>Certificate Management</h1>
+    <p>View, search and manage issued certificates.</p>
+
+    <div class="search-area">
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search by Certificate ID or Student Name"
+        >
+
+        <button onclick="renderCertificates()">Search</button>
+        <button onclick="clearSearch()">Reset</button>
+    </div>
+
+    <p id="message"></p>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Certificate ID</th>
+                    <th>Student Name</th>
+                    <th>Course</th>
+                    <th>Issue Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="certificateTable"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+if (sessionStorage.getItem("adminLoggedIn") !== "true") {
+    window.location.href = "login.html";
+}
+
+function getRecords() {
+    try {
+        const data = JSON.parse(
+            localStorage.getItem("certificates")
+        );
+
+        return Array.isArray(data) ? data : [];
+    } catch {
+        return [];
+    }
+}
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+function renderCertificates() {
+
+    const records = getRecords();
+
+    const search = document.getElementById("searchInput")
+        .value.trim().toLowerCase();
+
+    const filtered = records.filter(c =>
+        String(c.id).toLowerCase().includes(search) ||
+        String(c.name).toLowerCase().includes(search)
+    );
+
+    const table = document.getElementById("certificateTable");
+
+    if (filtered.length === 0) {
+        table.innerHTML = `
+            <tr>
+                <td colspan="6">No certificates found.</td>
+            </tr>
+        `;
+        return;
+    }
+
+    table.innerHTML = filtered.map(c => {
+
+        const isValid = c.status === "Valid";
+
+        return `
+            <tr>
+                <td>${escapeHTML(c.id)}</td>
+                <td>${escapeHTML(c.name)}</td>
+                <td>${escapeHTML(c.course)}</td>
+                <td>${escapeHTML(c.date)}</td>
+
+                <td class="${isValid ? "valid" : "revoked"}">
+                    ${escapeHTML(c.status)}
+                </td>
+
+                <td>
+                    <button
+                        class="action-btn ${isValid ? "revoke-btn" : "restore-btn"}"
+                        data-id="${escapeHTML(c.id)}"
+                    >
+                        ${isValid ? "Revoke" : "Restore"}
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join("");
+}
+
+document.getElementById("certificateTable")
+.addEventListener("click", function(event) {
+
+    const button = event.target.closest("button[data-id]");
+
+    if (!button) return;
+
+    const id = button.dataset.id;
+    const records = getRecords();
+
+    const certificate = records.find(c => c.id === id);
+
+    if (!certificate) return;
+
+    if (certificate.status === "Valid") {
+        const confirmed = confirm(
+            "Are you sure you want to revoke this certificate?"
+        );
+
+        if (!confirmed) return;
+
+        certificate.status = "Revoked";
+
+    } else {
+        const confirmed = confirm(
+            "Do you want to restore this certificate?"
+        );
+
+        if (!confirmed) return;
+
+        certificate.status = "Valid";
+    }
+
+    localStorage.setItem(
+        "certificates",
+        JSON.stringify(records)
+    );
+
+    document.getElementById("message").textContent =
+        "Certificate status updated successfully!";
+
+    renderCertificates();
+});
+
+function clearSearch() {
+    document.getElementById("searchInput").value = "";
+    document.getElementById("message").textContent = "";
+    renderCertificates();
+}
+
+document.getElementById("searchInput")
+.addEventListener("input", renderCertificates);
+
+renderCertificates();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Certificate Verification System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h2>CertiVerify</h2>
+   <nav>
+    <a href="#home">Home</a>
+    <a href="#verify">Verify Certificate</a>
+    <a href="#about">About</a>
+    <a href="login.html">Admin Login</a>
+</nav>
+</header>
+
+<section class="hero" id="home">
+    <h1>Digital Certificate Verification System</h1>
+    <p>Verify your certificates quickly and securely.</p>
+
+    <div class="search-box" id="verify">
+        <input type="text" id="certificateId"
+        placeholder="Enter Certificate ID">
+        <button onclick="verifyCertificate()">Verify</button>
+    </div>
+
+    <div id="result"></div>
+</section>
+
+<section class="features" id="about">
+    <h2>Our Features</h2>
+
+    <div class="cards">
+        <div class="card">
+            <h3>Secure Verification</h3>
+            <p>Check certificate authenticity.</p>
+        </div>
+
+        <div class="card">
+            <h3>Fast Results</h3>
+            <p>Verify certificates within seconds.</p>
+        </div>
+
+        <div class="card">
+            <h3>Digital Records</h3>
+            <p>Maintain certificate information.</p>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <p>© 2026 Digital Certificate Verification System</p>
+    <p>SESD College Project</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
